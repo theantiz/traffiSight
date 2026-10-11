@@ -278,3 +278,8 @@ async def ws_traffic(websocket: WebSocket):
     finally:
         if cap is not None:
             cap.release()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("src.main:app", host="0.0.0.0", port=8000, reload=True, reload_dirs=["src"])
