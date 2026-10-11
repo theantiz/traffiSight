@@ -176,6 +176,7 @@ async def ws_traffic(websocket: WebSocket):
     cap = None
     loaded_version = -1
     last_time = time.time()
+    last_log_time = 0.0
     fps = 0.0
 
     try:
@@ -253,6 +254,12 @@ async def ws_traffic(websocket: WebSocket):
                     await asyncio.sleep(0.05)
                     continue
 
+            # Downsample high-resolution video (e.g. 4K/1080p) for real-time inference & fast streaming
+            h, w = frame.shape[:2]
+            if w > 960:
+                scale = 960.0 / w
+                frame = cv2.resize(frame, (960, int(h * scale)))
+
             t0 = time.time()
             annotated, stats = tracker.process_frame(frame)
             proc_ms = (time.time() - t0) * 1000
@@ -275,19 +282,24 @@ async def ws_traffic(websocket: WebSocket):
             if n > peak_count:
                 peak_count = n
 
-            _log_row(stats)
+            # Throttle CSV writes to at most once per second
+            if now - last_log_time >= 1.0:
+                _log_row(stats)
+                last_log_time = now
+
             stats_history.append(stats)
             if len(stats_history) > MAX_HISTORY:
                 stats_history.pop(0)
 
-            _, buf = cv2.imencode(".jpg", annotated)
+            # High-performance compressed JPEG for WebSocket streaming (~40KB)
+            _, buf = cv2.imencode(".jpg", annotated, [cv2.IMWRITE_JPEG_QUALITY, 70])
             b64 = base64.b64encode(buf).decode("utf-8")
 
             payload = {k: v for k, v in stats.items() if k != "detections"}
             payload["frame"] = f"data:image/jpeg;base64,{b64}"
 
             await websocket.send_json(payload)
-            await asyncio.sleep(0.03)
+            await asyncio.sleep(0.02)
 
     except WebSocketDisconnect:
         pass
@@ -301,4 +313,5 @@ async def ws_traffic(websocket: WebSocket):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("src.main:app", host="0.0.0.0", port=8000, reload=True, reload_dirs=["src"])
+    # reload=False prevents WatchFiles from restarting when videos or logs are created in data/
+    uvicorn.run("src.main:app", host="0.0.0.0", port=8000, reload=False)
