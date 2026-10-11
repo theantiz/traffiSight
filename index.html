@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TraffiSight</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0c0c0c;--s1:#141414;--s2:#1a1a1a;--s3:#222;
+      --b:#1e1e1e;--b2:#2a2a2a;
+      --t:#ccc;--t2:#888;--t3:#555;
+      --blue:#4a90d9;--green:#3daa6d;--yellow:#d4a03c;--red:#c44;
+      --mono:'SF Mono','Cascadia Code','JetBrains Mono','Consolas',monospace;
+    }
+    body{font-family:var(--mono);background:var(--bg);color:var(--t);font-size:12px;overflow:hidden;height:100vh}
+
+    /* ── topbar ── */
+    .topbar{
+      height:36px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 14px;background:var(--s1);border-bottom:1px solid var(--b);
+      user-select:none;
+    }
+    .topbar-left{display:flex;align-items:center;gap:14px}
+    .topbar h1{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--t2)}
+    .conn{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--t3)}
+    .conn-dot{width:6px;height:6px;border-radius:50%;background:var(--t3)}
+    .conn-dot.on{background:var(--green)}
+    .topbar-right{display:flex;align-items:center;gap:12px}
+    .topbar-stat{font-size:10px;color:var(--t3)}
+    .topbar-stat span{color:var(--t2)}
+    .tbtn{
+      background:none;border:1px solid var(--b2);color:var(--t3);
+      font:inherit;font-size:10px;padding:3px 8px;border-radius:2px;cursor:pointer;
+    }
+    .tbtn:hover{border-color:var(--t3);color:var(--t2)}
+
+    /* ── shell ── */
+    .shell{display:grid;grid-template-columns:1fr 260px;grid-template-rows:1fr;height:calc(100vh - 36px)}
+
+    /* ── main panel ── */
+    .main{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--b)}
+
+    /* video */
+    .vid{position:relative;background:#000;flex-shrink:0}
+    .vid img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+    .vid-overlay{
+      position:absolute;top:0;left:0;right:0;
+      display:flex;justify-content:space-between;align-items:flex-start;
+      padding:8px 10px;pointer-events:none;
+    }
+    .vid-tag{
+      background:rgba(0,0,0,.65);padding:2px 7px;border-radius:2px;
+      font-size:10px;color:var(--t2);pointer-events:auto;
+    }
+    .cong-tag{font-weight:600}
+    .cong-tag.free{color:var(--green)}.cong-tag.moderate{color:var(--yellow)}.cong-tag.heavy{color:var(--red)}
+    .vid-controls{
+      position:absolute;bottom:8px;left:8px;display:flex;gap:4px;
+    }
+    .vbtn{
+      background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.1);
+      color:var(--t2);font:inherit;font-size:10px;padding:3px 8px;
+      border-radius:2px;cursor:pointer;
+    }
+    .vbtn:hover{background:rgba(255,255,255,.08)}
+    .vbtn.on{border-color:var(--blue);color:var(--blue)}
+
+    /* charts area */
+    .charts{flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;min-height:0}
+    .cpanel{
+      background:var(--s1);border-top:1px solid var(--b);border-right:1px solid var(--b);
+      padding:10px 12px;display:flex;flex-direction:column;overflow:hidden;
+    }
+    .cpanel:last-child{border-right:none}
+    .cpanel h3{font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+    .cpanel canvas{flex:1;min-height:0}
+
+    /* ── sidebar ── */
+    .sidebar{
+      display:flex;flex-direction:column;overflow-y:auto;
+      background:var(--s1);
+    }
+    .sb{padding:12px 14px;border-bottom:1px solid var(--b)}
+
+    /* big number */
+    .big{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+    .big.blue{color:var(--blue)}.big.dim{color:var(--t3);font-size:20px}
+    .lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px}
+
+    /* inline stats row */
+    .irow{display:flex;gap:12px;margin-top:6px}
+    .istat .iv{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+    .istat .il{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+
+    /* class grid */
+    .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .citem{background:var(--bg);border:1px solid var(--b);border-radius:2px;padding:8px}
+    .citem .cv{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:1px}
+    .citem .cl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+    .citem:nth-child(1) .cv{color:var(--blue)}
+    .citem:nth-child(2) .cv{color:var(--yellow)}
+    .citem:nth-child(3) .cv{color:var(--green)}
+    .citem:nth-child(4) .cv{color:var(--red)}
+
+    /* crossing */
+    .crow{display:flex;justify-content:space-between;align-items:center;padding:3px 0}
+    .crow .cd{color:var(--t3);font-size:11px}
+    .crow .cn{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+
+    /* speed block */
+    .srow{display:flex;gap:16px;margin-top:4px}
+    .srow .sv{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+    .srow .sl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+    .unit{font-size:10px;font-weight:400;color:var(--t3)}
+
+    /* event log */
+    .elog{flex:1;overflow-y:auto;max-height:160px}
+    .evt{
+      display:flex;align-items:center;gap:8px;
+      padding:4px 0;border-bottom:1px solid var(--b);
+      font-size:10px;color:var(--t2);
+    }
+    .evt:last-child{border-bottom:none}
+    .evt-dir{
+      font-size:9px;font-weight:700;padding:1px 5px;border-radius:2px;
+      text-transform:uppercase;letter-spacing:.5px;
+    }
+    .evt-dir.in{background:rgba(61,170,109,.15);color:var(--green)}
+    .evt-dir.out{background:rgba(212,160,60,.15);color:var(--yellow)}
+    .evt-id{color:var(--t3)}
+
+    /* upload */
+    .up-area{
+      border:1px dashed var(--b2);border-radius:2px;padding:10px;
+      text-align:center;cursor:pointer;color:var(--t3);font-size:10px;
+    }
+    .up-area:hover{border-color:var(--t3)}
+    .up-area input{display:none}
+    .up-msg{margin-top:4px;font-size:9px;color:var(--t3)}
+
+    /* scrollbar */
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--s1)}
+    ::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
+
+    @media(max-width:960px){
+      .shell{grid-template-columns:1fr}
+      .sidebar{display:none}
+      .charts{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── topbar ── -->
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>TRAFFISIGHT</h1>
+    <div class="conn">
+      <span id="connDot" class="conn-dot"></span>
+      <span id="connLabel">disconnected</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-stat"><span id="fpsVal">0</span> fps</div>
+    <div class="topbar-stat"><span id="latVal">0</span> ms</div>
+    <div class="topbar-stat">up <span id="uptime">0s</span></div>
+    <div class="topbar-stat">frame <span id="frameNum">0</span></div>
+    <a href="/api/download-log"><button class="tbtn">export csv</button></a>
+  </div>
+</div>
+
+<!-- ── shell ── -->
+<div class="shell">
+
+  <!-- main -->
+  <div class="main">
+    <div class="vid">
+      <img id="stream" src="" alt=""/>
+      <div class="vid-overlay">
+        <span class="vid-tag">LIVE</span>
+        <span id="congTag" class="vid-tag cong-tag free">FREE</span>
+      </div>
+      <div class="vid-controls">
+        <button id="heatBtn" class="vbtn">heatmap [h]</button>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="cpanel">
+        <h3>Vehicle count</h3>
+        <canvas id="cntChart"></canvas>
+      </div>
+      <div class="cpanel">
+        <h3>Speed over time</h3>
+        <canvas id="spdChart"></canvas>
+      </div>
+      <div class="cpanel">
+        <h3>Speed distribution</h3>
+        <canvas id="distChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- sidebar -->
+  <div class="sidebar">
+
+    <!-- active -->
+    <div class="sb">
+      <div class="lbl">Active</div>
+      <div class="big blue" id="activeN">0</div>
+      <div class="irow">
+        <div class="istat"><div class="iv" id="peakN">0</div><div class="il">peak</div></div>
+        <div class="istat"><div class="iv" id="totalN">0</div><div class="il">total seen</div></div>
+      </div>
+    </div>
+
+    <!-- classification -->
+    <div class="sb">
+      <div class="lbl">Classification</div>
+      <div class="cgrid">
+        <div class="citem"><div class="cl">Car</div><div class="cv" id="nCar">0</div></div>
+        <div class="citem"><div class="cl">Truck</div><div class="cv" id="nTruck">0</div></div>
+        <div class="citem"><div class="cl">Bus</div><div class="cv" id="nBus">0</div></div>
+        <div class="citem"><div class="cl">Moto</div><div class="cv" id="nMoto">0</div></div>
+      </div>
+    </div>
+
+    <!-- crossings -->
+    <div class="sb">
+      <div class="lbl">Line crossings</div>
+      <div class="crow"><span class="cd">IN</span><span class="cn" id="xIn" style="color:var(--green)">0</span></div>
+      <div class="crow"><span class="cd">OUT</span><span class="cn" id="xOut" style="color:var(--yellow)">0</span></div>
+    </div>
+
+    <!-- speed -->
+    <div class="sb">
+      <div class="lbl">Speed</div>
+      <div class="srow">
+        <div><div class="sv" id="avgSpd">0 <span class="unit">avg</span></div></div>
+        <div><div class="sv" id="maxSpd">0 <span class="unit">max</span></div></div>
+      </div>
+      <div style="font-size:9px;color:var(--t3);margin-top:4px">km/h</div>
+    </div>
+
+    <!-- event log -->
+    <div class="sb" style="flex:1;display:flex;flex-direction:column">
+      <div class="lbl">Crossing log</div>
+      <div class="elog" id="elog"></div>
+    </div>
+
+    <!-- upload -->
+    <div class="sb">
+      <label class="up-area" for="upFile">
+        upload video
+        <input id="upFile" type="file" accept="video/*"/>
+        <div class="up-msg" id="upMsg"></div>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+// ── charts ──
+const MAXP=80;
+const cntL=[],cntD=[],spdL=[],spdD=[];
+
+const chartOpts=(color)=>({
+  responsive:true,maintainAspectRatio:false,animation:false,
+  plugins:{legend:{display:false}},
+  elements:{point:{radius:0}},
+  scales:{
+    x:{display:false},
+    y:{beginAtZero:true,ticks:{color:'#444',font:{size:9,family:'inherit'}},grid:{color:'#1a1a1a'},border:{display:false}},
+  },
+});
+
+const cntChart=new Chart($("cntChart"),{
+  type:"line",
+  data:{labels:cntL,datasets:[{data:cntD,borderColor:'#4a90d9',backgroundColor:'rgba(74,144,217,.06)',fill:true,tension:.3,borderWidth:1.5}]},
+  options:chartOpts(),
+});
+
+const spdChart=new Chart($("spdChart"),{
+  type:"line",
+  data:{labels:spdL,datasets:[{data:spdD,borderColor:'#3daa6d',backgroundColor:'rgba(61,170,109,.06)',fill:true,tension:.3,borderWidth:1.5}]},
+  options:chartOpts(),
+});
+
+const distChart=new Chart($("distChart"),{
+  type:"bar",
+  data:{
+    labels:["0-20","20-40","40-60","60-80","80+"],
+    datasets:[{data:[0,0,0,0,0],backgroundColor:['#4a90d9','#3daa6d','#d4a03c','#c44','#888'],borderRadius:2,barPercentage:.7}],
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{color:'#555',font:{size:8,family:'inherit'}},grid:{display:false},border:{display:false}},
+      y:{beginAtZero:true,ticks:{color:'#444',font:{size:9,family:'inherit'}},grid:{color:'#1a1a1a'},border:{display:false}},
+    },
+  },
+});
+
+// ── congestion ──
+const CONG={free:{text:'FREE',cls:'free'},moderate:{text:'MODERATE',cls:'moderate'},heavy:{text:'HEAVY',cls:'heavy'}};
+
+// ── uptime format ──
+function fmtUp(s){
+  if(s<60)return s+'s';
+  if(s<3600)return Math.floor(s/60)+'m '+s%60+'s';
+  return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';
+}
+
+// ── event log ──
+let lastEvtCount=0;
+function renderEvents(evts){
+  if(!evts||evts.length===lastEvtCount)return;
+  lastEvtCount=evts.length;
+  const el=$("elog");
+  el.innerHTML=evts.slice().reverse().map(e=>
+    `<div class="evt"><span class="evt-dir ${e.dir}">${e.dir}</span><span>${e.cls}</span><span class="evt-id">#${e.id}</span></div>`
+  ).join('');
+}
+
+// ── websocket ──
+let ws,heatOn=false;
+
+function connect(){
+  ws=new WebSocket(`ws://${location.host}/ws/traffic`);
+
+  ws.onopen=()=>{
+    $("connDot").classList.add("on");
+    $("connLabel").textContent="connected";
+  };
+
+  ws.onmessage=e=>{
+    const d=JSON.parse(e.data);
+
+    if(d.frame)$("stream").src=d.frame;
+
+    // counts
+    $("activeN").textContent=d.total_active??0;
+    $("peakN").textContent=d.peak_active??0;
+    $("totalN").textContent=d.total_unique??0;
+
+    // class
+    const cc=d.class_counts||{};
+    $("nCar").textContent=cc.car||0;
+    $("nTruck").textContent=cc.truck||0;
+    $("nBus").textContent=cc.bus||0;
+    $("nMoto").textContent=cc.motorcycle||0;
+
+    // crossings
+    const lc=d.line_crossings||{};
+    $("xIn").textContent=lc.in||0;
+    $("xOut").textContent=lc.out||0;
+
+    // speed
+    $("avgSpd").innerHTML=(d.avg_speed??0)+' <span class="unit">avg</span>';
+    $("maxSpd").innerHTML=(d.max_speed_session??0)+' <span class="unit">max</span>';
+
+    // congestion
+    const cg=CONG[d.congestion]||CONG.free;
+    const ct=$("congTag");
+    ct.textContent=cg.text;
+    ct.className='vid-tag cong-tag '+cg.cls;
+
+    // topbar
+    $("fpsVal").textContent=d.fps??0;
+    $("latVal").textContent=d.proc_ms??0;
+    $("uptime").textContent=fmtUp(d.uptime_s||0);
+    $("frameNum").textContent=d.frame_num??0;
+
+    // count chart
+    cntL.push('');cntD.push(d.total_active??0);
+    if(cntL.length>MAXP){cntL.shift();cntD.shift()}
+    cntChart.update();
+
+    // speed chart
+    spdL.push('');spdD.push(d.avg_speed??0);
+    if(spdL.length>MAXP){spdL.shift();spdD.shift()}
+    spdChart.update();
+
+    // dist chart
+    if(d.speed_distribution){
+      distChart.data.datasets[0].data=d.speed_distribution;
+      distChart.update();
+    }
+
+    // events
+    renderEvents(d.recent_events);
+  };
+
+  ws.onclose=()=>{
+    $("connDot").classList.remove("on");
+    $("connLabel").textContent="reconnecting";
+    setTimeout(connect,2000);
+  };
+}
+connect();
+
+// ── heatmap ──
+function toggleHeat(){
+  if(ws&&ws.readyState===1){
+    ws.send("toggle_heatmap");
+    heatOn=!heatOn;
+    $("heatBtn").classList.toggle("on",heatOn);
+  }
+}
+$("heatBtn").addEventListener("click",toggleHeat);
+
+// ── keyboard ──
+document.addEventListener("keydown",e=>{
+  if(e.key==='h'||e.key==='H')toggleHeat();
+});
+
+// ── upload ──
+$("upFile").addEventListener("change",async function(){
+  const f=this.files[0];if(!f)return;
+  $("upMsg").textContent="uploading...";
+  const fd=new FormData();fd.append("file",f);
+  try{
+    const r=await fetch("/api/upload-video",{method:"POST",body:fd});
+    const j=await r.json();
+    $("upMsg").textContent=f.name+' ('+(j.size_bytes/1048576).toFixed(1)+'MB)';
+  }catch{$("upMsg").textContent="failed"}
+});
+</script>
+</body>
+</html>
