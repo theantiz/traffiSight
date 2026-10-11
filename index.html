@@ -37,7 +37,7 @@
     .tbtn:hover{border-color:var(--t3);color:var(--t2)}
 
     /* ── shell ── */
-    .shell{display:grid;grid-template-columns:1fr 280px;height:calc(100vh - 36px)}
+    .shell{display:grid;grid-template-columns:1fr 290px;height:calc(100vh - 36px)}
 
     /* ── main panel ── */
     .main{display:flex;flex-direction:column;height:100%;overflow:hidden;border-right:1px solid var(--b)}
@@ -45,7 +45,7 @@
     /* video */
     .vid{
       position:relative;background:#050505;
-      height:60%;min-height:220px;
+      height:58%;min-height:220px;
       display:flex;align-items:center;justify-content:center;
       overflow:hidden;border-bottom:1px solid var(--b);
     }
@@ -82,7 +82,7 @@
     .vbtn.on{border-color:var(--blue);color:var(--blue)}
 
     /* charts area */
-    .charts{height:40%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;min-height:140px}
+    .charts{height:42%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;min-height:140px}
     .cpanel{
       background:var(--s1);border-right:1px solid var(--b);
       padding:8px 10px;display:flex;flex-direction:column;overflow:hidden;
@@ -99,19 +99,19 @@
     .sb{padding:10px 12px;border-bottom:1px solid var(--b)}
 
     /* big number */
-    .big{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
-    .big.blue{color:var(--blue)}.big.dim{color:var(--t3);font-size:20px}
+    .big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+    .big.blue{color:var(--blue)}.big.dim{color:var(--t3);font-size:18px}
     .lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:4px}
 
     /* inline stats row */
     .irow{display:flex;gap:12px;margin-top:5px}
-    .istat .iv{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+    .istat .iv{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
     .istat .il{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
 
     /* class grid */
     .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
     .citem{background:var(--bg);border:1px solid var(--b);border-radius:2px;padding:6px 8px}
-    .citem .cv{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:1px}
+    .citem .cv{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:1px}
     .citem .cl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
     .citem:nth-child(1) .cv{color:var(--blue)}
     .citem:nth-child(2) .cv{color:var(--yellow)}
@@ -121,39 +121,66 @@
     /* crossing */
     .crow{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
     .crow .cd{color:var(--t3);font-size:11px}
-    .crow .cn{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+    .crow .cn{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
 
     /* speed block */
-    .srow{display:flex;gap:16px;margin-top:3px}
-    .srow .sv{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+    .srow{display:flex;gap:14px;margin-top:3px}
+    .srow .sv{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
     .srow .sl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
     .unit{font-size:10px;font-weight:400;color:var(--t3)}
 
     /* upload area */
     .up-area{
-      border:1px dashed var(--b2);border-radius:3px;padding:10px;
+      border:1px dashed var(--b2);border-radius:3px;padding:8px;
       text-align:center;cursor:pointer;color:var(--t2);font-size:11px;
       background:var(--bg);display:block;transition:border-color .15s, background .15s;
     }
     .up-area:hover{border-color:var(--blue);background:var(--s2)}
     .up-area input{display:none}
-    .up-msg{margin-top:4px;font-size:9px;color:var(--t3)}
+    .up-msg{margin-top:3px;font-size:9px;color:var(--t3)}
 
-    /* event log */
-    .elog{flex:1;overflow-y:auto;max-height:130px;min-height:60px}
-    .evt{
-      display:flex;align-items:center;gap:8px;
-      padding:3px 0;border-bottom:1px solid var(--b);
-      font-size:10px;color:var(--t2);
+    /* ── Incident & ANPR Gallery ── */
+    .inc-gallery{
+      display:flex;flex-direction:column;gap:6px;
+      overflow-y:auto;max-height:180px;min-height:80px;
     }
-    .evt:last-child{border-bottom:none}
-    .evt-dir{
-      font-size:9px;font-weight:700;padding:1px 5px;border-radius:2px;
-      text-transform:uppercase;letter-spacing:.5px;
+    .inc-card{
+      display:flex;gap:8px;background:var(--bg);
+      border:1px solid var(--b2);border-radius:2px;padding:5px;
+      cursor:pointer;transition:border-color .15s, background .15s;
     }
-    .evt-dir.in{background:rgba(61,170,109,.15);color:var(--green)}
-    .evt-dir.out{background:rgba(212,160,60,.15);color:var(--yellow)}
-    .evt-id{color:var(--t3)}
+    .inc-card:hover{border-color:var(--blue);background:var(--s2)}
+    .inc-thumb{
+      width:54px;height:36px;border-radius:2px;
+      object-fit:cover;background:#000;border:1px solid var(--b);flex-shrink:0;
+    }
+    .inc-info{flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0}
+    .inc-badge{
+      font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;
+      text-transform:uppercase;letter-spacing:.5px;display:inline-block;align-self:flex-start;
+    }
+    .inc-badge.speeding{background:rgba(204,68,68,.2);color:var(--red)}
+    .inc-badge.stalled{background:rgba(212,160,60,.2);color:var(--yellow)}
+    .inc-plate{font-size:9px;font-weight:700;color:#fff;letter-spacing:.5px}
+    .inc-meta{font-size:8px;color:var(--t3)}
+
+    /* ── Modal Popup ── */
+    .modal-overlay{
+      position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;
+      z-index:999;
+    }
+    .modal-box{
+      background:var(--s1);border:1px solid var(--b2);border-radius:4px;
+      padding:16px;max-width:380px;width:90%;box-shadow:0 8px 24px rgba(0,0,0,.8);
+    }
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .modal-header h3{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--t)}
+    .modal-img{width:100%;height:180px;object-fit:contain;background:#000;border:1px solid var(--b);border-radius:2px}
+    .modal-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--b);font-size:11px}
+    .modal-row:last-child{border-bottom:none}
+    .modal-lbl{color:var(--t3)}
+    .modal-val{font-weight:600;color:var(--t)}
 
     /* scrollbar */
     ::-webkit-scrollbar{width:4px}
@@ -226,7 +253,7 @@
   <!-- sidebar -->
   <div class="sidebar">
 
-    <!-- upload (at top for easy access) -->
+    <!-- upload -->
     <div class="sb">
       <div class="lbl">Video Source</div>
       <label class="up-area" for="upFile">
@@ -234,6 +261,20 @@
         <input id="upFile" type="file" accept="video/mp4,video/*"/>
         <div class="up-msg" id="upMsg">click or drag & drop here</div>
       </label>
+    </div>
+
+    <!-- speed limit control -->
+    <div class="sb">
+      <div class="lbl">Speed Enforcement</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px">
+        <span style="font-size:10px;color:var(--t2)">Violation Limit:</span>
+        <div style="display:flex;align-items:center;gap:4px">
+          <button class="tbtn" id="btnSpdDown">-5</button>
+          <span style="font-size:13px;font-weight:700;color:var(--yellow);min-width:24px;text-align:center" id="spdLimitText">45</span>
+          <span style="font-size:9px;color:var(--t3)">km/h</span>
+          <button class="tbtn" id="btnSpdUp">+5</button>
+        </div>
+      </div>
     </div>
 
     <!-- active -->
@@ -273,19 +314,43 @@
       </div>
     </div>
 
-    <!-- event log -->
+    <!-- incident & snapshot gallery -->
     <div class="sb" style="flex:1;display:flex;flex-direction:column">
-      <div class="lbl">Crossing log</div>
-      <div class="elog" id="elog"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="lbl" style="margin-bottom:0">Incident Gallery & ANPR</div>
+        <span id="incCountBadge" style="font-size:9px;color:var(--red);font-weight:700">0 alerts</span>
+      </div>
+      <div class="inc-gallery" id="incGallery">
+        <div style="font-size:10px;color:var(--t3);text-align:center;padding:12px">No violations logged</div>
+      </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ── Incident Detail Modal ── -->
+<div id="incModal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modalTitle">INCIDENT EVIDENCE DOSSIER</h3>
+      <button class="tbtn" id="modalClose">✕</button>
+    </div>
+    <img id="modalImg" class="modal-img" src="" alt="Violation Snapshot"/>
+    <div style="margin-top:10px">
+      <div class="modal-row"><span class="modal-lbl">Violation Type</span><span class="modal-val" id="modalType" style="color:var(--red)"></span></div>
+      <div class="modal-row"><span class="modal-lbl">License Plate (ANPR)</span><span class="modal-val" id="modalPlate" style="color:#fff"></span></div>
+      <div class="modal-row"><span class="modal-lbl">Vehicle Category</span><span class="modal-val" id="modalClass"></span></div>
+      <div class="modal-row"><span class="modal-lbl">Recorded Speed</span><span class="modal-val" id="modalSpeed"></span></div>
+      <div class="modal-row"><span class="modal-lbl">Timestamp</span><span class="modal-val" id="modalTime"></span></div>
+      <div class="modal-row"><span class="modal-lbl">Track Identifier</span><span class="modal-val" id="modalTrack"></span></div>
+    </div>
   </div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
 
-// ── backend URL detection (handles Live Server :5500, file:///, and direct :8000) ──
+// ── backend URL detection ──
 function getBackendUrls(){
   const isHttp = location.protocol.startsWith("http");
   const isFastApiPort = location.port === "8000";
@@ -346,7 +411,6 @@ const distChart=new Chart($("distChart"),{
   },
 });
 
-// ── congestion mapping ──
 const CONG={free:{text:'FREE',cls:'free'},moderate:{text:'MODERATE',cls:'moderate'},heavy:{text:'HEAVY',cls:'heavy'}};
 
 function fmtUp(s){
@@ -355,15 +419,56 @@ function fmtUp(s){
   return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';
 }
 
-let lastEvtCount=0;
-function renderEvents(evts){
-  if(!evts||evts.length===lastEvtCount)return;
-  lastEvtCount=evts.length;
-  const el=$("elog");
-  el.innerHTML=evts.slice().reverse().map(e=>
-    `<div class="evt"><span class="evt-dir ${e.dir}">${e.dir}</span><span>${e.cls}</span><span class="evt-id">#${e.id}</span></div>`
-  ).join('');
+// ── incidents gallery render ──
+let renderedIncidents = [];
+function renderIncidents(incidents){
+  if (!incidents || incidents.length === 0) return;
+  renderedIncidents = incidents;
+  $("incCountBadge").textContent = `${incidents.length} alert${incidents.length > 1 ? 's' : ''}`;
+  const el = $("incGallery");
+  el.innerHTML = incidents.map((inc, idx) => {
+    const isSpeeding = inc.type && inc.type.includes("SPEEDING");
+    const badgeCls = isSpeeding ? "speeding" : "stalled";
+    return `
+      <div class="inc-card" onclick="openIncidentModal(${idx})">
+        <img class="inc-thumb" src="${inc.thumb}" alt="Violation"/>
+        <div class="inc-info">
+          <span class="inc-badge ${badgeCls}">${inc.type}</span>
+          <span class="inc-plate">${inc.plate}</span>
+          <span class="inc-meta">${inc.class} • ${inc.time}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
+
+function openIncidentModal(idx){
+  const inc = renderedIncidents[idx];
+  if (!inc) return;
+  $("modalImg").src = inc.thumb;
+  $("modalType").textContent = inc.type;
+  $("modalPlate").textContent = inc.plate;
+  $("modalClass").textContent = inc.class.toUpperCase();
+  $("modalSpeed").textContent = `${inc.speed} km/h`;
+  $("modalTime").textContent = inc.time;
+  $("modalTrack").textContent = `#${inc.track_id} (${inc.id})`;
+  $("incModal").style.display = "flex";
+}
+
+$("modalClose").onclick = () => { $("incModal").style.display = "none"; };
+$("incModal").onclick = (e) => { if (e.target === $("incModal")) $("incModal").style.display = "none"; };
+
+// ── speed limit controls ──
+let currentSpeedLimit = 45;
+function updateSpeedLimit(delta){
+  currentSpeedLimit = Math.max(15, Math.min(120, currentSpeedLimit + delta));
+  $("spdLimitText").textContent = currentSpeedLimit;
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(`speed_limit:${currentSpeedLimit}`);
+  }
+}
+$("btnSpdDown").onclick = () => updateSpeedLimit(-5);
+$("btnSpdUp").onclick = () => updateSpeedLimit(5);
 
 // ── websocket ──
 let ws, heatOn=false, reconnectTimer=null;
@@ -398,28 +503,28 @@ function connect(){
       $("vidPlaceholder").style.display = "none";
     }
 
-    // counts
     $("activeN").textContent = d.total_active ?? 0;
     $("peakN").textContent = d.peak_active ?? 0;
     $("totalN").textContent = d.total_unique ?? 0;
 
-    // class
     const cc = d.class_counts || {};
     $("nCar").textContent = cc.car || 0;
     $("nTruck").textContent = cc.truck || 0;
     $("nBus").textContent = cc.bus || 0;
     $("nMoto").textContent = cc.motorcycle || 0;
 
-    // crossings
     const lc = d.line_crossings || {};
     $("xIn").textContent = lc.in || 0;
     $("xOut").textContent = lc.out || 0;
 
-    // speed
     $("avgSpd").innerHTML = (d.avg_speed ?? 0) + ' <span class="unit">avg</span>';
     $("maxSpd").innerHTML = (d.max_speed_session ?? 0) + ' <span class="unit">max</span>';
 
-    // congestion / status
+    if (d.speed_limit && d.speed_limit !== currentSpeedLimit) {
+      currentSpeedLimit = Math.round(d.speed_limit);
+      $("spdLimitText").textContent = currentSpeedLimit;
+    }
+
     const ct = $("congTag");
     if (d.status === "waiting_for_video") {
       ct.textContent = "WAITING FOR VIDEO";
@@ -430,13 +535,11 @@ function connect(){
       ct.className = 'vid-tag cong-tag ' + cg.cls;
     }
 
-    // topbar stats
     $("fpsVal").textContent = d.fps ?? 0;
     $("latVal").textContent = d.proc_ms ?? 0;
     $("uptime").textContent = fmtUp(d.uptime_s || 0);
     $("frameNum").textContent = d.frame_num ?? 0;
 
-    // line charts
     cntL.push(''); cntD.push(d.total_active ?? 0);
     if (cntL.length > MAXP) { cntL.shift(); cntD.shift(); }
     cntChart.update();
@@ -450,7 +553,10 @@ function connect(){
       distChart.update();
     }
 
-    renderEvents(d.recent_events);
+    // Render incident snapshots & ANPR
+    if (d.incidents) {
+      renderIncidents(d.incidents);
+    }
   };
 
   ws.onerror = () => {
@@ -470,16 +576,15 @@ function connect(){
 
 function onDisconnect(reason) {
   $("connDot").className = "conn-dot";
-  $("connLabel").textContent = reason + " (run: uvicorn src.main:app)";
+  $("connLabel").textContent = reason + " (run: python src\\main.py)";
   $("vidPlaceholder").style.display = "flex";
   $("stream").style.display = "none";
   $("phTitle").textContent = "TRAFFISIGHT // SERVER OFFLINE";
-  $("phMsg").textContent = "Backend server not responding on " + backendHost + ". Please run: uvicorn src.main:app --host 0.0.0.0 --port 8000";
+  $("phMsg").textContent = "Backend server not responding on " + backendHost + ". Please run: python src\\main.py";
 }
 
 connect();
 
-// ── heatmap toggle ──
 function toggleHeat(){
   if (ws && ws.readyState === 1) {
     ws.send("toggle_heatmap");
@@ -493,7 +598,6 @@ document.addEventListener("keydown", e => {
   if (e.key === 'h' || e.key === 'H') toggleHeat();
 });
 
-// ── upload handler ──
 const dropLabel = $("upFile").parentElement;
 
 async function uploadFile(f) {
@@ -512,8 +616,8 @@ async function uploadFile(f) {
       spdL.length = 0; spdD.length = 0;
       cntChart.update();
       spdChart.update();
-      $("elog").innerHTML = "";
-      lastEvtCount = 0;
+      $("incGallery").innerHTML = '<div style="font-size:10px;color:var(--t3);text-align:center;padding:12px">No violations logged</div>';
+      $("incCountBadge").textContent = '0 alerts';
     } else {
       $("upMsg").textContent = "upload failed";
       $("upMsg").style.color = "var(--red)";

@@ -166,6 +166,12 @@ async def ws_traffic(websocket: WebSocket):
                 msg = await websocket.receive_text()
                 if msg == "toggle_heatmap":
                     show_heatmap = not show_heatmap
+                elif msg.startswith("speed_limit:"):
+                    try:
+                        val = float(msg.split(":")[1])
+                        tracker.set_speed_limit(val)
+                    except ValueError:
+                        pass
         except (WebSocketDisconnect, asyncio.CancelledError):
             pass
         except Exception:
@@ -240,6 +246,8 @@ async def ws_traffic(websocket: WebSocket):
                     "uptime_s": round(time.time() - session_start),
                     "frame_num": 0,
                     "recent_events": [],
+                    "incidents": [],
+                    "speed_limit": tracker.speed_limit,
                     "speed_distribution": [0, 0, 0, 0, 0],
                 })
                 await asyncio.sleep(0.5)
