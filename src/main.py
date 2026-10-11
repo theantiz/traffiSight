@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 
 import cv2
+import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse
 
@@ -14,7 +15,7 @@ from src.detector import TrafficTracker
 app = FastAPI(title="TraffiSight API")
 tracker = TrafficTracker()
 
-# logging
+# ── logging ──
 LOG_DIR = "data/logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 LOG_FILE = os.path.join(LOG_DIR, f"traffic_{datetime.now():%Y%m%d_%H%M%S}.csv")
@@ -23,6 +24,25 @@ stats_history: list[dict] = []
 MAX_HISTORY = 2000
 session_start = time.time()
 peak_count = 0
+
+
+# ── video state manager ──
+class VideoState:
+    def __init__(self):
+        self.path = None
+        os.makedirs("data", exist_ok=True)
+        if os.path.exists("data/traffic.mp4"):
+            self.path = "data/traffic.mp4"
+        else:
+            # Check for any existing mp4 in data/
+            for f in os.listdir("data"):
+                if f.lower().endswith(".mp4"):
+                    self.path = os.path.join("data", f)
+                    break
+        self.version = 1 if self.path else 0
+
+
+video_state = VideoState()
 
 
 def _init_csv():
@@ -60,7 +80,7 @@ def _congestion(n: int) -> str:
     return "free"
 
 
-# routes
+# ── routes ──
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open("index.html", encoding="utf-8") as f:
@@ -86,26 +106,45 @@ async def api_download():
 
 @app.post("/api/upload-video")
 async def api_upload(file: UploadFile = File(...)):
-    path = f"data/{file.filename}"
-    content = await file.read()
+    global peak_count, stats_history
+    filename = file.filename or "uploaded_video.mp4"
+    path = os.path.join("data", filename)
+
+    # Stream write in 1MB chunks for large files
     with open(path, "wb") as f:
-        f.write(content)
-    return {"status": "ok", "path": path, "size_bytes": len(content)}
+        while chunk := await file.read(1024 * 1024):
+            f.write(chunk)
+
+    video_state.path = path
+    video_state.version += 1
+
+    tracker.reset()
+    peak_count = 0
+    stats_history.clear()
+
+    return {
+        "status": "ok",
+        "path": path,
+        "filename": filename,
+        "size_bytes": os.path.getsize(path),
+    }
 
 
-# websocket
+# ── websocket ──
 @app.websocket("/ws/traffic")
 async def ws_traffic(websocket: WebSocket):
     global peak_count
     await websocket.accept()
-    cap = cv2.VideoCapture("data/traffic.mp4")
+
+    cap = None
+    loaded_version = -1
     show_heatmap = False
     last_time = time.time()
     fps = 0.0
 
     try:
-        while cap.isOpened():
-            # non-blocking control messages
+        while True:
+            # Non-blocking client control messages
             try:
                 msg = await asyncio.wait_for(websocket.receive_text(), timeout=0.001)
                 if msg == "toggle_heatmap":
@@ -113,16 +152,83 @@ async def ws_traffic(websocket: WebSocket):
             except asyncio.TimeoutError:
                 pass
 
+            # Check if video changed or needs initialization
+            if loaded_version != video_state.version:
+                if cap is not None:
+                    cap.release()
+                    cap = None
+
+                if video_state.path and os.path.exists(video_state.path):
+                    new_cap = cv2.VideoCapture(video_state.path)
+                    if new_cap.isOpened():
+                        cap = new_cap
+                        loaded_version = video_state.version
+                        tracker.reset()
+                    else:
+                        new_cap.release()
+                else:
+                    loaded_version = video_state.version
+
+            # If no video is available yet, send a standby placeholder frame
+            if cap is None or not cap.isOpened():
+                standby_frame = np.zeros((360, 640, 3), dtype=np.uint8)
+                standby_frame[:] = (18, 18, 18)
+                cv2.putText(
+                    standby_frame,
+                    "TRAFFISIGHT // NO VIDEO LOADED",
+                    (60, 160),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.75,
+                    (110, 110, 110),
+                    2,
+                )
+                cv2.putText(
+                    standby_frame,
+                    "Upload an MP4 video in the sidebar to begin analysis",
+                    (60, 200),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (70, 70, 70),
+                    1,
+                )
+
+                _, buf = cv2.imencode(".jpg", standby_frame)
+                b64 = base64.b64encode(buf).decode("utf-8")
+
+                await websocket.send_json({
+                    "status": "waiting_for_video",
+                    "frame": f"data:image/jpeg;base64,{b64}",
+                    "total_active": 0,
+                    "class_counts": {},
+                    "line_crossings": {"in": 0, "out": 0},
+                    "avg_speed": 0,
+                    "max_speed_session": 0,
+                    "peak_active": 0,
+                    "total_unique": 0,
+                    "congestion": "free",
+                    "fps": 0,
+                    "proc_ms": 0,
+                    "uptime_s": round(time.time() - session_start),
+                    "frame_num": 0,
+                    "recent_events": [],
+                    "speed_distribution": [0, 0, 0, 0, 0],
+                })
+                await asyncio.sleep(0.5)
+                continue
+
+            # Read frame
             ret, frame = cap.read()
             if not ret:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                continue
+                ret, frame = cap.read()
+                if not ret:
+                    await asyncio.sleep(0.05)
+                    continue
 
             t0 = time.time()
             annotated, stats = tracker.process_frame(frame)
             proc_ms = (time.time() - t0) * 1000
 
-            # fps
             now = time.time()
             dt = now - last_time
             fps = 1.0 / dt if dt > 0 else 0
@@ -158,4 +264,5 @@ async def ws_traffic(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
     finally:
-        cap.release()
+        if cap is not None:
+            cap.release()

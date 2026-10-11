@@ -12,26 +12,21 @@ class TrafficTracker:
 
     def __init__(self, model_path: str = "yolov8n.pt"):
         self.model = YOLO(model_path)
+        self.line_y_ratio = 0.6
+        self.reset()
 
-        # Per-track state
+    def reset(self):
         self.track_history: dict[int, list] = defaultdict(list)
         self.speeds: dict[int, float] = {}
-
-        # Line crossing
         self.crossed_ids: set[int] = set()
         self.cross_count = {"in": 0, "out": 0}
-        self.line_y_ratio = 0.6
-        self.line_y: int | None = None
-
-        # Heatmap
-        self.heatmap: np.ndarray | None = None
-
-        # Session-level aggregates
+        self.line_y = None
+        self.heatmap = None
         self.all_seen_ids: set[int] = set()
-        self.max_speed: float = 0.0
-        self.peak_active: int = 0
-        self.crossing_events: list[dict] = []  # recent crossing log
-        self.frame_count: int = 0
+        self.max_speed = 0.0
+        self.peak_active = 0
+        self.crossing_events = []
+        self.frame_count = 0
 
     # speed
     def _estimate_speed(self, tid: int, cx: float, cy: float, ts: float) -> float:

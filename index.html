@@ -366,11 +366,16 @@ function connect(){
     $("avgSpd").innerHTML=(d.avg_speed??0)+' <span class="unit">avg</span>';
     $("maxSpd").innerHTML=(d.max_speed_session??0)+' <span class="unit">max</span>';
 
-    // congestion
-    const cg=CONG[d.congestion]||CONG.free;
+    // congestion / status
     const ct=$("congTag");
-    ct.textContent=cg.text;
-    ct.className='vid-tag cong-tag '+cg.cls;
+    if(d.status === "waiting_for_video") {
+      ct.textContent = "WAITING FOR VIDEO";
+      ct.className = "vid-tag cong-tag moderate";
+    } else {
+      const cg=CONG[d.congestion]||CONG.free;
+      ct.textContent=cg.text;
+      ct.className='vid-tag cong-tag '+cg.cls;
+    }
 
     // topbar
     $("fpsVal").textContent=d.fps??0;
@@ -421,16 +426,56 @@ document.addEventListener("keydown",e=>{
   if(e.key==='h'||e.key==='H')toggleHeat();
 });
 
-// ── upload ──
-$("upFile").addEventListener("change",async function(){
-  const f=this.files[0];if(!f)return;
-  $("upMsg").textContent="uploading...";
-  const fd=new FormData();fd.append("file",f);
-  try{
-    const r=await fetch("/api/upload-video",{method:"POST",body:fd});
-    const j=await r.json();
-    $("upMsg").textContent=f.name+' ('+(j.size_bytes/1048576).toFixed(1)+'MB)';
-  }catch{$("upMsg").textContent="failed"}
+// ── upload & drag-drop ──
+const dropLabel = $("upFile").parentElement;
+
+async function uploadFile(f) {
+  if (!f) return;
+  $("upMsg").textContent = "uploading " + f.name + "...";
+  $("upMsg").style.color = "var(--blue)";
+  const fd = new FormData();
+  fd.append("file", f);
+  try {
+    const r = await fetch("/api/upload-video", { method: "POST", body: fd });
+    const j = await r.json();
+    if (j.status === "ok") {
+      $("upMsg").textContent = "loaded " + f.name + " (" + (j.size_bytes / 1048576).toFixed(1) + "MB)";
+      $("upMsg").style.color = "var(--green)";
+      // reset local chart data for the new video
+      cntL.length = 0; cntD.length = 0;
+      spdL.length = 0; spdD.length = 0;
+      cntChart.update();
+      spdChart.update();
+      $("elog").innerHTML = "";
+      lastEvtCount = 0;
+    } else {
+      $("upMsg").textContent = "upload failed";
+      $("upMsg").style.color = "var(--red)";
+    }
+  } catch {
+    $("upMsg").textContent = "upload failed";
+    $("upMsg").style.color = "var(--red)";
+  }
+}
+
+$("upFile").addEventListener("change", function() {
+  uploadFile(this.files[0]);
+});
+
+dropLabel.addEventListener("dragover", e => {
+  e.preventDefault();
+  dropLabel.style.borderColor = "var(--blue)";
+});
+dropLabel.addEventListener("dragleave", e => {
+  e.preventDefault();
+  dropLabel.style.borderColor = "var(--b2)";
+});
+dropLabel.addEventListener("drop", e => {
+  e.preventDefault();
+  dropLabel.style.borderColor = "var(--b2)";
+  if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+    uploadFile(e.dataTransfer.files[0]);
+  }
 });
 </script>
 </body>
