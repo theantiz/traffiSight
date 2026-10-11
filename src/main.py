@@ -12,6 +12,14 @@ from fastapi.responses import HTMLResponse, FileResponse
 
 from fastapi.middleware.cors import CORSMiddleware
 
+import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from src.detector import TrafficTracker
 
 app = FastAPI(title="TraffiSight API")
