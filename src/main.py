@@ -10,9 +10,20 @@ import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from src.detector import TrafficTracker
 
 app = FastAPI(title="TraffiSight API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 tracker = TrafficTracker()
 
 # ── logging ──
@@ -105,6 +116,7 @@ async def api_download():
 
 
 @app.post("/api/upload-video")
+@app.post("/api/upload-video/")
 async def api_upload(file: UploadFile = File(...)):
     global peak_count, stats_history
     filename = file.filename or "uploaded_video.mp4"
