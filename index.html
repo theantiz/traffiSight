@@ -285,16 +285,19 @@
 <script>
 const $=id=>document.getElementById(id);
 
-// ── backend URL detection (handles file:/// and http://) ──
+// ── backend URL detection (handles Live Server :5500, file:///, and direct :8000) ──
 function getBackendUrls(){
   const isHttp = location.protocol.startsWith("http");
-  const host = (isHttp && location.host) ? location.host : "localhost:8000";
+  const isFastApiPort = location.port === "8000";
+  const targetHost = (isHttp && isFastApiPort)
+    ? location.host
+    : ((location.hostname && location.hostname !== "") ? location.hostname : "127.0.0.1") + ":8000";
   const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
   const httpProto = location.protocol === "https:" ? "https:" : "http:";
   return {
-    host,
-    wsUrl: `${wsProto}//${host}/ws/traffic`,
-    apiBase: isHttp ? "" : `${httpProto}://${host}`
+    host: targetHost,
+    wsUrl: `${wsProto}//${targetHost}/ws/traffic`,
+    apiBase: `${httpProto}://${targetHost}`
   };
 }
 
