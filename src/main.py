@@ -149,21 +149,29 @@ async def ws_traffic(websocket: WebSocket):
     await websocket.accept()
 
     cap = None
-    loaded_version = -1
     show_heatmap = False
+
+    async def receive_controls():
+        nonlocal show_heatmap
+        try:
+            while True:
+                msg = await websocket.receive_text()
+                if msg == "toggle_heatmap":
+                    show_heatmap = not show_heatmap
+        except (WebSocketDisconnect, asyncio.CancelledError):
+            pass
+        except Exception:
+            pass
+
+    recv_task = asyncio.create_task(receive_controls())
+
+    cap = None
+    loaded_version = -1
     last_time = time.time()
     fps = 0.0
 
     try:
         while True:
-            # Non-blocking client control messages
-            try:
-                msg = await asyncio.wait_for(websocket.receive_text(), timeout=0.001)
-                if msg == "toggle_heatmap":
-                    show_heatmap = not show_heatmap
-            except asyncio.TimeoutError:
-                pass
-
             # Check if video changed or needs initialization
             if loaded_version != video_state.version:
                 if cap is not None:
@@ -275,7 +283,10 @@ async def ws_traffic(websocket: WebSocket):
 
     except WebSocketDisconnect:
         pass
+    except Exception as e:
+        print(f"WebSocket session ended: {e}")
     finally:
+        recv_task.cancel()
         if cap is not None:
             cap.release()
 
