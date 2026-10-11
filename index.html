@@ -477,6 +477,14 @@ function connect(){
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
     return;
   }
+  if (ws) {
+    ws.onopen = null;
+    ws.onmessage = null;
+    ws.onerror = null;
+    ws.onclose = null;
+    try { ws.close(); } catch(e){}
+    ws = null;
+  }
   $("connLabel").textContent = "connecting to " + backendHost + "...";
   $("connDot").className = "conn-dot";
 
